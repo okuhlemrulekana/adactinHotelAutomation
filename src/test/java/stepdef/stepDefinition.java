@@ -11,58 +11,71 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.Select;
 
+import java.sql.*;
 import java.util.concurrent.TimeUnit;
 
-public class StepDef {
-    WebDriver driver;
-    @Given("I am on the login page")
-    public void iAmOnTheLoginPage() {
-        driver = new ChromeDriver();
+public class stepDefinition {
 
+    WebDriver driver;
+    String url = "jdbc:sqlite:src/test/java/testData/sample.db";
+
+    @Given("I am on the login page")
+    public void i_am_on_the_login_page() {
+        driver = new ChromeDriver();
         driver.get("https://adactinhotelapp.com/HotelAppBuild2/");
     }
 
-    @When("I enter valid credentials with username {string} and password {string}")
-    public void iEnterValidCredentialsWithUsernameAndPassword(String username, String password) {
-        driver.findElement(By.id("username")).sendKeys(username);
-        driver.findElement(By.id("password")).sendKeys(password);
+    @When("I enter valid credentials with username and password")
+    public void i_enter_valid_credentials_with_username_and_password() {
 
+        String sql = "SELECT username, password FROM hotel_booking;";
+
+        try (Connection conn = DriverManager.getConnection(url);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                driver.findElement(By.id("username")).sendKeys(rs.getString("username"));
+                driver.findElement(By.id("password")).sendKeys(rs.getString("password"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     @And("I click on the login button")
     public void iClickOnTheLoginButton() {
-        WebElement loginButton = driver.findElement(By.id("login"));
-        loginButton.click();
-
+        driver.findElement(By.id("login")).click();
     }
 
     @Then("I should be logged in to my account")
     public void iShouldBeLoggedInToMyAccount() {
         WebElement logoutLink = driver.findElement(By.linkText("Logout"));
         Assert.assertTrue(logoutLink.isDisplayed());
-
     }
 
-    @When("I search for hotels with {string}, {string}, {string}, {string}, {string}, {string}, {string}, {string}")
-    public void iSearchForHotelsWith(String location, String hotel, String roomType, String numberOfRooms, String checkInDate, String checkOutDate, String adultsPerRoom, String childrenPerRoom) {
+    @When("I search for hotels with location, hotel, room_type, number_of_rooms, check_in_date, check_out_date, adults_per_room,children_per_room")
+    public void iSearchForHotelsWithLocationHotelRoom_typeNumber_of_roomsCheck_in_dateCheck_out_dateAdults_per_roomChildren_per_room() {
+        String sql = "SELECT location, hotel, room_type, number_of_rooms, check_in_date, check_out_date, adults_per_room, children_per_room  FROM hotel_booking;";
+        try (Connection conn = DriverManager.getConnection(url);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
-        driver.findElement(By.id("location")).sendKeys(location);
+            while (rs.next()) {
+                driver.findElement(By.id("location")).sendKeys(rs.getString("location"));
+                driver.findElement(By.id("hotels")).sendKeys(rs.getString("hotel"));
+                driver.findElement(By.id("room_type")).sendKeys(rs.getString("room_type"));
+                driver.findElement(By.id("room_nos")).sendKeys(rs.getString("number_of_rooms"));
+                driver.findElement(By.id("datepick_in")).sendKeys(rs.getString("check_in_date"));
+                driver.findElement(By.id("datepick_out")).sendKeys(rs.getString("check_out_date"));
+                driver.findElement(By.id("adult_room")).sendKeys(rs.getString("adults_per_room"));
+                driver.findElement(By.xpath("/html/body/table[2]/tbody/tr[2]/td/form/table/tbody/tr[9]/td[2]/select")).sendKeys(rs.getString("children_per_room"));
 
-        driver.findElement(By.id("hotels")).sendKeys(hotel);
-
-        driver.findElement(By.id("room_type")).sendKeys(roomType);
-
-        driver.findElement(By.id("room_nos")).sendKeys(numberOfRooms);
-
-        driver.findElement(By.id("datepick_in")).sendKeys(checkInDate);
-
-        driver.findElement(By.id("datepick_out")).sendKeys(checkOutDate);
-
-        driver.findElement(By.id("adult_room")).sendKeys(adultsPerRoom);
-
-        driver.findElement(By.id("child_room")).sendKeys(childrenPerRoom);
-
-        driver.findElement(By.id("Submit")).click();
+                driver.findElement(By.id("Submit")).click();
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
 
     }
 
@@ -70,9 +83,7 @@ public class StepDef {
     public void iSelectAHotel() {
         driver.findElement(By.id("radiobutton_0")).click();
         driver.findElement(By.id("continue")).click();
-
     }
-
     @And("I book the hotel")
     public void iBookTheHotel() {
         driver.findElement(By.id("first_name")).sendKeys("John");
@@ -85,7 +96,6 @@ public class StepDef {
         driver.findElement(By.id("cc_cvv")).sendKeys("123");
 
         driver.findElement(By.id("book_now")).click();
-
     }
 
     @Then("I should see a confirmation of my booking")
@@ -102,6 +112,7 @@ public class StepDef {
             System.out.println("Booking is not displayed.");
         }
     }
+
 
     @When("I click on Logout")
     public void iClickOnLogout() {
